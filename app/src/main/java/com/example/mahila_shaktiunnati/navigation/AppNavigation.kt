@@ -9,19 +9,28 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.mahila_shaktiunnati.ui.screens.*
+import com.google.firebase.auth.FirebaseAuth
 
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
+    val currentUser = FirebaseAuth.getInstance().currentUser
+    val startDestination = if (currentUser != null) "home" else "login"
 
     NavHost(
         navController = navController, 
-        startDestination = "home",
+        startDestination = startDestination,
         enterTransition = { slideInVertically(initialOffsetY = { it }, animationSpec = tween(400)) + fadeIn() },
         exitTransition = { slideOutVertically(targetOffsetY = { -it }, animationSpec = tween(400)) + fadeOut() },
         popEnterTransition = { slideInVertically(initialOffsetY = { -it }, animationSpec = tween(400)) + fadeIn() },
         popExitTransition = { slideOutVertically(targetOffsetY = { it }, animationSpec = tween(400)) + fadeOut() }
     ) {
+        composable("login") {
+            LoginScreen(navController = navController)
+        }
+        composable("signup") {
+            SignUpScreen(navController = navController)
+        }
         composable("home") {
             HomeScreen(navController = navController)
         }

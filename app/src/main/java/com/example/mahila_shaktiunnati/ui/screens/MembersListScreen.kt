@@ -47,7 +47,7 @@ fun MembersListScreen(navController: NavController, startTab: Int = 0) {
         AlertDialog(
             onDismissRequest = { memberToDelete = null },
             title = { Text("Delete Member") },
-            text = { Text("Are you sure you want to delete ${memberToDelete?.name}?") },
+            text = { Text("Are you sure you want to delete ${memberToDelete?.name}? All their records will be erased.") },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -62,9 +62,7 @@ fun MembersListScreen(navController: NavController, startTab: Int = 0) {
                 }
             },
             dismissButton = {
-                TextButton(onClick = { memberToDelete = null }) {
-                    Text("Cancel")
-                }
+                TextButton(onClick = { memberToDelete = null }) { Text("Cancel") }
             }
         )
     }
@@ -92,18 +90,16 @@ fun MembersListScreen(navController: NavController, startTab: Int = 0) {
                     )
                 )
                 
-                // Search Bar
+                // Search Bar for "Too many names"
                 OutlinedTextField(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
-                    placeholder = { Text("Search members...", color = Color.White.copy(alpha = 0.7f)) },
+                    placeholder = { Text("Search by name...", color = Color.White.copy(alpha = 0.6f)) },
                     leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = Color.White) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
                     shape = RoundedCornerShape(12.dp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        unfocusedBorderColor = Color.White.copy(alpha = 0.5f),
+                        unfocusedBorderColor = Color.White.copy(alpha = 0.3f),
                         focusedBorderColor = Color.White,
                         cursorColor = Color.White,
                         focusedTextColor = Color.White,
@@ -145,9 +141,9 @@ fun MembersListScreen(navController: NavController, startTab: Int = 0) {
             }
             
             Text(
-                text = if (selectedTab == 0) "Found: ${filteredMembers.size} members" else "Eligible: ${filteredMembers.size}",
+                text = if (selectedTab == 0) "Showing ${filteredMembers.size} members" else "Eligible for Loan: ${filteredMembers.size}",
                 modifier = Modifier.padding(16.dp),
-                fontSize = 14.sp,
+                fontSize = 13.sp,
                 fontWeight = FontWeight.Medium,
                 color = CardTextSummary
             )
@@ -190,38 +186,27 @@ fun MemberListItem(member: Member, showLoanAction: Boolean, onClick: () -> Unit,
             verticalAlignment = Alignment.CenterVertically
         ) {
             val initials = member.name.split(" ").mapNotNull { it.firstOrNull()?.toString() }.joinToString("").take(2).uppercase()
-            Box(
-                modifier = Modifier.size(50.dp).background(PurplePrimary, CircleShape),
-                contentAlignment = Alignment.Center
-            ) {
+            Box(modifier = Modifier.size(50.dp).background(PurplePrimary, CircleShape), contentAlignment = Alignment.Center) {
                 Text(text = initials, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
             }
 
-            Column(
-                modifier = Modifier.weight(1f).padding(horizontal = 16.dp)
-            ) {
+            Column(modifier = Modifier.weight(1f).padding(horizontal = 16.dp)) {
                 Text(text = member.name, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = CardTextTitle)
                 Text(text = member.role, fontSize = 12.sp, color = CardTextSummary)
                 Row(modifier = Modifier.padding(top = 4.dp)) {
-                    Text(
-                        text = "S: ₹${String.format(Locale.getDefault(), "%.0f", member.totalSavings)}",
-                        fontSize = 12.sp, color = Color(0xFF2E7D32), fontWeight = FontWeight.Medium
-                    )
+                    Text(text = "S: ₹${String.format(Locale.getDefault(), "%.0f", member.totalSavings)}", fontSize = 12.sp, color = Color(0xFF2E7D32), fontWeight = FontWeight.Medium)
                     if (member.activeLoan > 0) {
                         Spacer(modifier = Modifier.width(12.dp))
-                        Text(
-                            text = "L: ₹${String.format(Locale.getDefault(), "%.0f", member.activeLoan)}",
-                            fontSize = 12.sp, color = Color(0xFFD32F2F), fontWeight = FontWeight.Medium
-                        )
+                        Text(text = "L: ₹${String.format(Locale.getDefault(), "%.0f", member.activeLoan)}", fontSize = 12.sp, color = Color(0xFFD32F2F), fontWeight = FontWeight.Medium)
                     }
                 }
             }
 
             if (showLoanAction) {
-                Icon(Icons.AutoMirrored.Filled.TrendingUp, contentDescription = null, tint = PurplePrimary)
+                Icon(Icons.AutoMirrored.Filled.TrendingUp, contentDescription = "Activate Loan", tint = PurplePrimary)
             } else {
                 IconButton(onClick = onDelete) {
-                    Icon(Icons.Default.Delete, contentDescription = null, tint = Color(0xFFEF5350), modifier = Modifier.size(20.dp))
+                    Icon(Icons.Default.Delete, contentDescription = "Delete", tint = Color(0xFFEF5350), modifier = Modifier.size(20.dp))
                 }
                 Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = Color(0xFFBDBDBD))
             }

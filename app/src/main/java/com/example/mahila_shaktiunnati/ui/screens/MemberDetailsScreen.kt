@@ -59,7 +59,7 @@ fun MemberDetailsScreen(navController: NavController, memberId: Int) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
             title = { Text("Delete Member") },
-            text = { Text("Are you sure you want to delete ${member?.name}?") },
+            text = { Text("Are you sure you want to delete ${member?.name}? This cannot be undone.") },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -76,9 +76,7 @@ fun MemberDetailsScreen(navController: NavController, memberId: Int) {
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteDialog = false }) {
-                    Text("Cancel")
-                }
+                TextButton(onClick = { showDeleteDialog = false }) { Text("Cancel") }
             }
         )
     }
@@ -86,9 +84,9 @@ fun MemberDetailsScreen(navController: NavController, memberId: Int) {
     if (showInterestDeductDialog) {
         AlertDialog(
             onDismissRequest = { showInterestDeductDialog = false },
-            title = { Text("Deduct Interest") },
+            title = { Text("Automatic Interest Deduction") },
             text = { 
-                Text("Confirm deduction of ₹ ${String.format(Locale.getDefault(), "%.2f", activeLoan?.interestAmount ?: 0.0)} from ${member?.name}'s savings?") 
+                Text("Deduct ₹ ${String.format(Locale.getDefault(), "%.2f", activeLoan?.interestAmount ?: 0.0)} from savings for monthly interest?") 
             },
             confirmButton = {
                 TextButton(
@@ -101,14 +99,15 @@ fun MemberDetailsScreen(navController: NavController, memberId: Int) {
                                         memberId = memberId,
                                         amount = -loan.interestAmount,
                                         date = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(Date()),
-                                        note = "Interest Deduction"
+                                        note = "Auto Interest Deduction"
                                     ))
                                     repaymentDao.insertRepayment(LoanRepayment(
                                         loanId = loan.id,
                                         amount = loan.interestAmount,
-                                        note = "Interest from Savings"
+                                        note = "Interest Paid via Savings"
                                     ))
-                                    Toast.makeText(context, "Interest deducted", Toast.LENGTH_SHORT).show()
+                                    shgDao.decreaseMemberActiveLoan(memberId, loan.interestAmount)
+                                    Toast.makeText(context, "Interest deducted successfully", Toast.LENGTH_SHORT).show()
                                     showInterestDeductDialog = false
                                 } else {
                                     Toast.makeText(context, "Insufficient savings!", Toast.LENGTH_SHORT).show()
@@ -117,47 +116,11 @@ fun MemberDetailsScreen(navController: NavController, memberId: Int) {
                         }
                     }
                 ) {
-                    Text("Deduct")
+                    Text("Deduct Now")
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showInterestDeductDialog = false }) {
-                    Text("Cancel")
-                }
-            }
-        )
-    }
-
-    if (showRepayDialog) {
-        AlertDialog(
-            onDismissRequest = { showRepayDialog = false },
-            title = { Text("Confirm Repayment") },
-            text = { Text("Mark the full amount as repaid?") },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        scope.launch {
-                            activeLoan?.let { loan ->
-                                repaymentDao.insertRepayment(LoanRepayment(
-                                    loanId = loan.id, 
-                                    amount = loan.totalRepayment, 
-                                    note = "Full Repayment"
-                                ))
-                                loanDao.payOffLoan(loan.id)
-                                shgDao.updateMemberActiveLoan(memberId, 0.0)
-                                activeLoan = null
-                                showRepayDialog = false
-                            }
-                        }
-                    }
-                ) {
-                    Text("Confirm")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showRepayDialog = false }) {
-                    Text("Cancel")
-                }
+                TextButton(onClick = { showInterestDeductDialog = false }) { Text("Cancel") }
             }
         )
     }
@@ -165,7 +128,7 @@ fun MemberDetailsScreen(navController: NavController, memberId: Int) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Member Details", fontSize = 18.sp, fontWeight = FontWeight.SemiBold) },
+                title = { Text("Member Profile", fontSize = 18.sp, fontWeight = FontWeight.SemiBold) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -182,12 +145,9 @@ fun MemberDetailsScreen(navController: NavController, memberId: Int) {
     ) { padding ->
         member?.let { m ->
             LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding),
+                modifier = Modifier.fillMaxSize().padding(padding),
                 contentPadding = PaddingValues(16.dp)
             ) {
-                // Profile Section
                 item {
                     Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
                         val initials = m.name.split(" ").mapNotNull { it.firstOrNull()?.toString() }.joinToString("").take(2).uppercase()
@@ -201,18 +161,17 @@ fun MemberDetailsScreen(navController: NavController, memberId: Int) {
                     Spacer(modifier = Modifier.height(24.dp))
                 }
 
-                // Balance Cards
                 item {
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                         DetailStatCard(
-                            title = "Savings Balance",
-                            value = "₹ ${String.format(Locale.getDefault(), "%,.2f", m.totalSavings)}",
+                            title = "Savings",
+                            value = "₹ ${String.format(Locale.getDefault(), "%,.0f", m.totalSavings)}",
                             valueColor = Color(0xFF2E7D32),
                             modifier = Modifier.weight(1f)
                         )
                         DetailStatCard(
-                            title = "Active Loan",
-                            value = "₹ ${String.format(Locale.getDefault(), "%,.2f", m.activeLoan)}",
+                            title = "Loan",
+                            value = "₹ ${String.format(Locale.getDefault(), "%,.0f", m.activeLoan)}",
                             valueColor = if (m.activeLoan > 0) Color(0xFFD32F2F) else Color(0xFF757575),
                             modifier = Modifier.weight(1f)
                         )
@@ -220,16 +179,15 @@ fun MemberDetailsScreen(navController: NavController, memberId: Int) {
                     Spacer(modifier = Modifier.height(24.dp))
                 }
 
-                // Loan Section
                 item {
                     if (m.activeLoan > 0 && activeLoan != null) {
-                        Text(text = "Active Loan Details", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = CardTextTitle)
+                        Text(text = "Active Loan Information", fontWeight = FontWeight.Bold, fontSize = 16.sp)
                         Spacer(modifier = Modifier.height(8.dp))
                         Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color.White)) {
                             Column(modifier = Modifier.padding(16.dp)) {
                                 LoanDetailRow("Principal", "₹ ${String.format(Locale.getDefault(), "%,.2f", activeLoan!!.principalAmount)}")
-                                LoanDetailRow("Interest (12%)", "₹ ${String.format(Locale.getDefault(), "%,.2f", activeLoan!!.interestAmount)}")
-                                LoanDetailRow("Total Due", "₹ ${String.format(Locale.getDefault(), "%,.2f", activeLoan!!.totalRepayment)}", isBold = true)
+                                LoanDetailRow("Monthly Interest", "₹ ${String.format(Locale.getDefault(), "%,.2f", activeLoan!!.interestAmount)}")
+                                LoanDetailRow("Current Balance", "₹ ${String.format(Locale.getDefault(), "%,.2f", m.activeLoan)}", isBold = true)
                             }
                         }
                         
@@ -259,19 +217,15 @@ fun MemberDetailsScreen(navController: NavController, memberId: Int) {
                             colors = ButtonDefaults.buttonColors(containerColor = PurplePrimary),
                             shape = RoundedCornerShape(8.dp)
                         ) {
-                            Text("Activate New Loan", fontWeight = FontWeight.Bold)
+                            Text("Activate Loan Flow", fontWeight = FontWeight.Bold)
                         }
                     }
                     Spacer(modifier = Modifier.height(32.dp))
                 }
 
-                // Repayment History Section
                 item {
-                    Text(text = "Repayment History (Date & Time)", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = CardTextTitle)
+                    Text(text = "Repayment History", fontWeight = FontWeight.Bold, fontSize = 16.sp)
                     Spacer(modifier = Modifier.height(12.dp))
-                    if (repayments.isEmpty()) {
-                        Text("No records found.", fontSize = 14.sp, color = CardTextSummary)
-                    }
                 }
 
                 items(repayments) { repayment ->
@@ -279,22 +233,13 @@ fun MemberDetailsScreen(navController: NavController, memberId: Int) {
                     Spacer(modifier = Modifier.height(8.dp))
                 }
                 
-                // Delete Account Section at the bottom
                 item {
                     Spacer(modifier = Modifier.height(40.dp))
-                    TextButton(
-                        onClick = { showDeleteDialog = true },
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.textButtonColors(contentColor = Color.Gray)
-                    ) {
-                        Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Delete Member Account", fontSize = 13.sp)
+                    TextButton(onClick = { showDeleteDialog = true }, modifier = Modifier.fillMaxWidth()) {
+                        Text("Remove Member from SHG", color = Color.Gray, fontSize = 13.sp)
                     }
                 }
             }
-        } ?: Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator(color = PurplePrimary)
         }
     }
 }
@@ -302,19 +247,11 @@ fun MemberDetailsScreen(navController: NavController, memberId: Int) {
 @Composable
 fun RepaymentItem(repayment: LoanRepayment) {
     val date = SimpleDateFormat("dd MMM yyyy, hh:mm:ss a", Locale.getDefault()).format(Date(repayment.timestamp))
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp).fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+    Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color.White), elevation = CardDefaults.cardElevation(0.5.dp)) {
+        Row(modifier = Modifier.padding(12.dp).fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Column {
-                Text(text = date, fontSize = 12.sp, color = CardTextSummary)
-                Text(text = repayment.note, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                Text(text = date, fontSize = 11.sp, color = CardTextSummary)
+                Text(text = repayment.note, fontSize = 13.sp, fontWeight = FontWeight.Medium)
             }
             Text(text = "₹ ${String.format(Locale.getDefault(), "%,.2f", repayment.amount)}", fontWeight = FontWeight.Bold, color = Color(0xFF2E7D32))
         }
@@ -323,18 +260,10 @@ fun RepaymentItem(repayment: LoanRepayment) {
 
 @Composable
 fun DetailStatCard(title: String, value: String, valueColor: Color, modifier: Modifier = Modifier) {
-    Card(
-        modifier = modifier,
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(text = title, fontSize = 12.sp, color = CardTextSummary, fontWeight = FontWeight.Medium)
-            Spacer(modifier = Modifier.height(8.dp))
+    Card(modifier = modifier, shape = RoundedCornerShape(12.dp), colors = CardDefaults.cardColors(containerColor = Color.White), elevation = CardDefaults.cardElevation(1.dp)) {
+        Column(modifier = Modifier.padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(text = title, fontSize = 11.sp, color = CardTextSummary)
+            Spacer(modifier = Modifier.height(4.dp))
             Text(text = value, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = valueColor)
         }
     }
@@ -342,18 +271,8 @@ fun DetailStatCard(title: String, value: String, valueColor: Color, modifier: Mo
 
 @Composable
 fun LoanDetailRow(label: String, value: String, isBold: Boolean = false) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 6.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text(text = label, fontSize = 14.sp, color = CardTextSummary)
-        Text(
-            text = value, 
-            fontSize = 14.sp,
-            fontWeight = if (isBold) FontWeight.Bold else FontWeight.Medium, 
-            color = CardTextTitle
-        )
+    Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+        Text(text = label, fontSize = 13.sp, color = CardTextSummary)
+        Text(text = value, fontSize = 13.sp, fontWeight = if (isBold) FontWeight.Bold else FontWeight.Medium, color = CardTextTitle)
     }
 }

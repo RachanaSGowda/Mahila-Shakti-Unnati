@@ -1,23 +1,23 @@
 # Mahila-Shakti Unnati – Micro Finance App
 
-##  Overview
+## 📌 Overview
 Mahila-Shakti Unnati is an Android application developed for Women Self-Help Groups (SHGs) to digitally manage savings, loans, repayments, and member records. The app replaces traditional manual bookkeeping with a transparent and user-friendly digital system.
 
 ---
 
-##  Features
--  Member Management
--  Savings Tracking
--  Loan Management
--  Automatic Interest Calculation
--  Simple & Clean UI
--  Search Members
--  Dashboard Summary
--  Active Loan Monitoring
+## ✨ Features
+- 👥 Member Management
+- 💰 Savings Tracking
+- 🏦 Loan Management
+- 📊 Automatic Interest Calculation
+- 📱 Simple & Clean UI
+- 🔍 Search Members
+- 📈 Dashboard Summary
+- ✅ Active Loan Monitoring
 
 ---
 
-## Technologies Used
+## 🛠 Technologies Used
 - Kotlin
 - Android Studio
 - Jetpack Compose
@@ -28,7 +28,7 @@ Mahila-Shakti Unnati is an Android application developed for Women Self-Help Gro
 
 ---
 
-##  App Screenshots
+## 📷 App Screenshots
 
 ### Dashboard Screen
 Displays total group savings and navigation modules.
@@ -44,7 +44,7 @@ Manage SHG members, savings records, and loan details.
 
 ---
 
-##  System Workflow
+## ⚙️ System Workflow
 - Add and manage SHG members
 - Store savings records locally
 - Calculate loan interest automatically
@@ -53,7 +53,7 @@ Manage SHG members, savings records, and loan details.
 
 ---
 
-##  Problem Statement
+## 🎯 Problem Statement
 Many Self-Help Groups maintain financial records manually using notebooks, which can lead to:
 - Calculation errors
 - Difficulty tracking repayments
@@ -64,7 +64,7 @@ This application provides a digital solution for accurate and efficient financia
 
 ---
 
-##  Future Enhancements
+## 🚀 Future Enhancements
 - Firebase Integration
 - Cloud Backup
 - PDF Report Generation
@@ -73,6 +73,6 @@ This application provides a digital solution for accurate and efficient financia
 
 ---
 
-##  Developed By
+## 👩‍💻 Developed By
 Rachana S  
 MindMatrix VTU Internship Project
